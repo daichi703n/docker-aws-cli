@@ -1,4 +1,3 @@
-source docker-env.sh
 docker run -it --rm \
   -e DOCKER_USERNAME=${DOCKER_USERNAME} \
   -e AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION} \
