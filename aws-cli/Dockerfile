@@ -8,6 +8,7 @@ RUN apk --update --no-cache add \
     jq
 
 RUN pip install --no-cache-dir awscli && \
+    pip list awscli | grep awscli | awk -F' ' '{print $2}' > awscli-release && \
     apk -v --purge del py-pip && \
     rm -rf /usr/lib/python2.7/site-packages/awscli/examples
 
