@@ -2,14 +2,14 @@ FROM alpine:latest
 LABEL maintainer "Daichi Kimura <daichi703n@gmail.com>"
 
 RUN apk --update --no-cache add \
-    py-pip \
-    python \
+    python3 \
     groff \
-    jq
+    jq && \
+    pip3 install --upgrade --no-cache-dir pip
 
 RUN pip install --no-cache-dir awscli && \
     pip list awscli | grep awscli | awk -F' ' '{print $2}' > awscli-release && \
-    apk -v --purge del py-pip && \
-    rm -rf /usr/lib/python2.7/site-packages/awscli/examples
+    pip uninstall -y --no-cache-dir pip && \
+    rm -rf /usr/lib/python*/site-packages/awscli/examples
 
 CMD sh -c "cat /etc/alpine-release; aws --version"
