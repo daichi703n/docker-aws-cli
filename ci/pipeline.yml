@@ -18,7 +18,7 @@ resources:
   icon: github-circle
   source:
     uri: git@github.com:daichi703n/docker-((docker_image_name)).git
-    branch: develop
+    # branch: develop #uncomment on developping
     private_key: ((github_private_key))
 # - name: docker-awscli-image
 #   type: docker-image
@@ -264,7 +264,8 @@ jobs:
           git commit -m "Release ${AWSCLI_PATCH_VERSION}-alpine${ALPINE_PATCH_VERSION}"
           git tag -a ${AWSCLI_PATCH_VERSION}-alpine${ALPINE_PATCH_VERSION} -m ""
           # if [ #Diff ver ]; then #TODO: check latest release
-          git checkout develop
+          #switch to develop on developping
+          git checkout master
           git merge version/${AWSCLI_PATCH_VERSION}-alpine${ALPINE_PATCH_VERSION}
           # fi
           echo "${GITHUB_PRIVATE_KEY}" > id_rsa
