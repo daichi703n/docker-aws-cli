@@ -1,0 +1,7 @@
+#!/bin/sh
+set -eo pipefail
+
+docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD}
+
+docker tag ${DOCKER_USERNAME}/${DOCKER_IMAGE_NAME} ${DOCKER_USERNAME}/${DOCKER_IMAGE_NAME}:${DOCKER_TAG}
+docker push ${DOCKER_USERNAME}/${DOCKER_IMAGE_NAME}:${DOCKER_TAG}
