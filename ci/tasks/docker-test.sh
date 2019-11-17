@@ -1,4 +1,6 @@
 #!/bin/sh
+set -eo pipefail
+
 aws --version
 # echo "Exit Code: $?"
 
