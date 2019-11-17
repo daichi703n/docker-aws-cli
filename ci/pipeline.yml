@@ -106,7 +106,39 @@ jobs:
       params:
         alert_type: failed
     
+- name: test-docker-image
+  serial: true
+  build_logs_to_retain: 30
+  plan:
+  - in_parallel:
+    - get: repo
+      trigger: true
+      passed:
+      - create-docker-image
   - task: test-docker-image
     timeout: 1h
     params: *params
-    file: repo/ci/tasks/docker-test.yml
+    privileged: true
+    # file: repo/ci/tasks/docker-test.yml
+    # image: docker-awscli-image
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: daichi703n/awscli
+          tag: develop
+      inputs:
+      - name: repo
+      run: 
+        path: /bin/sh
+        args: 
+        - -c
+        - | 
+          cd repo/ci/tasks
+          echo "alpine-release: $(cat /etc/alpine-release)"
+          ./docker-test.sh
+    on_failure:
+      put: notify
+      params:
+        alert_type: failed
