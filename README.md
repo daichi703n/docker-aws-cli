@@ -26,6 +26,7 @@ Triggers:
 (TODO) **latest** release should be support latest minor version of **awscli** and **alpine**. patch version update (with previous minor version) is NOT tagged to latest.
 
 ex) Docker Image Upgrade LifyCycle
+
 |awscli |alpine |upgrade-tags |new-tags |
 |:-- |:-- |:-- |:-- |
 |minor |minor |latest, x.x, x.x.x |x.x.x-alpinex.x.x |
@@ -36,7 +37,7 @@ ex) Docker Image Upgrade LifyCycle
 |patch |none  |latest, x.x, x.x.x |x.x.x-alpinex.x.x |
 |none  |minor |latest, x.x, x.x.x |x.x.x-alpinex.x.x |
 |none  |patch |latest, x.x, x.x.x |x.x.x-alpinex.x.x |
-|none  |none  |none |
+|none  |none  |none |none |
 
 (TODO) Old-minor version patch: **latest** will not be upgraded.
 
