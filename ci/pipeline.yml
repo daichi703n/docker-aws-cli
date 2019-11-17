@@ -72,6 +72,40 @@ jobs:
       put: notify
       params:
         alert_type: failed
+  - task: push-develop-image
+    timeout: 1h
+    params:
+      <<: *params
+      DOCKER_TAG: develop
+    privileged: true
+    # file: repo/ci/tasks/docker-push.yml
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: docker
+          tag: dind
+      inputs:
+      - name: repo
+      outputs: 
+      - name: repo
+      - name: docker-images
+      run: 
+        path: /bin/sh
+        args: 
+        - -c
+        - |
+          cd repo/ci/tasks
+          source ./docker-lib.sh
+          start_docker
+          docker load < ../../../docker-images/awscli.tar
+          ./docker-push.sh
+    on_failure:
+      put: notify
+      params:
+        alert_type: failed
+    
   - task: test-docker-image
     timeout: 1h
     params: *params
