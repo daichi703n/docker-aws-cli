@@ -23,7 +23,7 @@ resources:
 # - name: dockerhub
 #   type: docker-image
 #   source:
-#     repository: daichi703n/docker-aws-cli
+#     repository: daichi703n/docker-awscli
 #     username: ((docker_username))
 #     password: ((docker_password))
 
@@ -67,7 +67,7 @@ jobs:
           source ./docker-lib.sh
           start_docker
           ./docker-build.sh
-          docker save daichi703n/aws-cli > ../../../docker-images/aws-cli.tar
+          docker save daichi703n/awscli > ../../../docker-images/awscli.tar
     on_failure:
       put: notify
       params:

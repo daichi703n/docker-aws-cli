@@ -1,5 +1,5 @@
 DOCKER_USERNAME=${USER}
-DOCKER_IMAGE_NAME='aws-cli'
+DOCKER_IMAGE_NAME='awscli'
 #---
 #WARNING: Cannot handle multi definition
 AWS_DEFAULT_REGION=`cat ~/.aws/credentials | grep "aws_default_region" | awk -F'aws_default_region=' '{print $2}'`
