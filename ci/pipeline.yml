@@ -20,12 +20,36 @@ resources:
     uri: git@github.com:daichi703n/docker-((docker_image_name)).git
     branch: develop
     private_key: ((github_private_key))
-# - name: dockerhub
+# - name: docker-awscli-image
 #   type: docker-image
+#   icon: docker
 #   source:
-#     repository: daichi703n/docker-awscli
+#     repository: daichi703n/awscli
 #     username: ((docker_username))
 #     password: ((docker_password))
+#     tag: develop
+- name: github-awscli-release
+  type: github-release
+  icon: github-circle
+  check_every: 30m
+  source:
+    # owner: concourse
+    # repository: docker-image-resource
+    owner: aws
+    repository: aws-cli
+    # access_token: 
+    # tag_filter: (.*)
+    # tag_filter: v?([^v].*)
+    order_by: time
+- name: docker-alpine-image
+  type: docker-image
+  icon: docker
+  check_every: 30m
+  source:
+    repository: alpine
+    username: ((docker_username))
+    password: ((docker_password))
+    tag: latest
 
 jobs:
 - name: create-docker-image
@@ -35,6 +59,10 @@ jobs:
   - in_parallel:
     - get: repo
       trigger: false
+    - get: docker-alpine-image
+      trigger: true
+    - get: github-awscli-release
+      trigger: true
   - task: build-docker-image
     timeout: 1h
     params: &params
@@ -44,8 +72,8 @@ jobs:
       DOCKER_IMAGE_NAME: ((docker_image_name))
       DOCKER_USERNAME: ((docker_username))
       DOCKER_PASSWORD: ((docker_password))
-    # file: repo/ci/tasks/docker-build.yml
     privileged: true
+    # file: repo/ci/tasks/docker-build.yml
     config:
       platform: linux
       image_resource:
@@ -72,7 +100,7 @@ jobs:
       put: notify
       params:
         alert_type: failed
-  - task: push-develop-image
+  - task: push-develop-image #TODO: migrate to use docker-image resource for push?
     timeout: 1h
     params:
       <<: *params
@@ -87,8 +115,6 @@ jobs:
           repository: docker
           tag: dind
       inputs:
-      - name: repo
-      outputs: 
       - name: repo
       - name: docker-images
       run: 
@@ -105,7 +131,7 @@ jobs:
       put: notify
       params:
         alert_type: failed
-    
+
 - name: test-docker-image
   serial: true
   build_logs_to_retain: 30
@@ -142,3 +168,113 @@ jobs:
       put: notify
       params:
         alert_type: failed
+
+- name: push-docker-image
+  serial: true
+  build_logs_to_retain: 30
+  plan:
+  - in_parallel:
+    - get: repo
+      trigger: true
+      passed:
+      - test-docker-image
+
+  - task: push-docker-image
+    timeout: 1h
+    params: *params
+    privileged: true
+    # file: repo/ci/tasks/docker-push.yml
+    # image: docker-awscli-image
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: docker
+          tag: dind
+      inputs:
+      - name: repo
+      outputs: 
+      - name: repo
+      run: 
+        path: /bin/sh
+        args: 
+        - -c
+        - |
+          cd repo/ci/tasks
+          source ./docker-lib.sh
+          start_docker
+          docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD}
+          set -eu pipefail
+          docker pull daichi703n/${DOCKER_IMAGE_NAME}:develop
+          docker tag daichi703n/${DOCKER_IMAGE_NAME}:develop daichi703n/${DOCKER_IMAGE_NAME}:latest
+          docker run -it daichi703n/${DOCKER_IMAGE_NAME}:develop aws --version > ../../versions/awscli-release
+          AWSCLI_MINOR_VERSION=$(cat ../../versions/awscli-release | grep aws-cli | awk -F'[/. ]' '{print $2"."$3}')
+          AWSCLI_PATCH_VERSION=$(cat ../../versions/awscli-release | grep aws-cli | awk -F'[/. ]' '{print $2"."$3"."$4}')
+          ALPINE_PATCH_VERSION=$(cat /etc/alpine-release)
+          # cat /tmp/aws-version > ../../versions/awscli-release
+          # echo -n $AWSCLI_PATCH_VERSION > ../../versions/awscli-release
+          echo -n $ALPINE_PATCH_VERSION > ../../versions/alpine-release
+          export DOCKER_TAG=${AWSCLI_PATCH_VERSION}-alpine${ALPINE_PATCH_VERSION}
+          ./docker-push.sh
+          export DOCKER_TAG=${AWSCLI_PATCH_VERSION}
+          ./docker-push.sh
+          export DOCKER_TAG=${AWSCLI_MINOR_VERSION}
+          ./docker-push.sh
+    on_failure:
+      put: notify
+      params:
+        alert_type: failed
+
+  - task: git-commit-versions
+    timeout: 1h
+    params:
+      <<: *params
+      GITHUB_PRIVATE_KEY: ((github_private_key))
+    # file: repo/ci/tasks/docker-push.yml
+    # image: docker-awscli-image
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: alpine/git
+          tag: latest
+      inputs:
+      - name: repo
+      outputs: 
+      - name: repo
+      run: 
+        path: /bin/sh
+        args: 
+        - -c
+        - |
+          cd repo
+          AWSCLI_MINOR_VERSION=$(cat versions/awscli-release | grep aws-cli | awk -F'[/. ]' '{print $2"."$3}')
+          AWSCLI_PATCH_VERSION=$(cat versions/awscli-release | grep aws-cli | awk -F'[/. ]' '{print $2"."$3"."$4}')
+          ALPINE_PATCH_VERSION=$(cat versions/alpine-release)
+          git config --global user.email "${DOCKER_USERNAME}+bot@gmail.com"
+          git config --global user.name "${DOCKER_USERNAME} CI Bot"
+          git stash
+          git checkout -b version/${AWSCLI_PATCH_VERSION}-alpine${ALPINE_PATCH_VERSION}
+          git stash pop
+          git status -u
+          git --no-pager diff
+          git add -A
+          git commit -m "Release ${AWSCLI_PATCH_VERSION}-alpine${ALPINE_PATCH_VERSION}"
+          git tag -a ${AWSCLI_PATCH_VERSION}-alpine${ALPINE_PATCH_VERSION} -m ""
+          # if [ #Diff ver ]; then #TODO: check latest release
+          git checkout develop
+          git merge version/${AWSCLI_PATCH_VERSION}-alpine${ALPINE_PATCH_VERSION}
+          # fi
+          echo "${GITHUB_PRIVATE_KEY}" > id_rsa
+          chmod 600 id_rsa
+          cat id_rsa
+          GIT_SSH_COMMAND='ssh -i id_rsa -o StrictHostKeyChecking=no' git push --all --follow-tags
+    on_failure:
+      put: notify
+      params:
+        alert_type: failed
+  - put: notify
+    params:
+      alert_type: success
