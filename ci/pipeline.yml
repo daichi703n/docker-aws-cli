@@ -5,6 +5,10 @@ resource_types:
   source:
     repository: arbourd/concourse-slack-alert-resource
     tag: latest
+- name: pypi
+  type: docker-image
+  source:
+    repository: cfplatformeng/concourse-pypi-resource
 
 resources:
 - name: notify
@@ -28,19 +32,13 @@ resources:
 #     username: ((docker_username))
 #     password: ((docker_password))
 #     tag: develop
-- name: github-awscli-release
-  type: github-release
-  icon: github-circle
-  check_every: 30m
+- name: pypi-awscli-resource
+  type: pypi
+  icon: language-python
   source:
-    # owner: concourse
-    # repository: docker-image-resource
-    owner: aws
-    repository: aws-cli
-    # access_token: 
-    # tag_filter: (.*)
-    # tag_filter: v?([^v].*)
-    order_by: time
+    name: awscli
+    packaging: any
+
 - name: docker-alpine-image
   type: docker-image
   icon: docker
@@ -61,7 +59,7 @@ jobs:
       trigger: false
     - get: docker-alpine-image
       trigger: true
-    - get: github-awscli-release
+    - get: pypi-awscli-resource
       trigger: true
   - task: build-docker-image
     timeout: 1h
