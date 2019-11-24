@@ -10,7 +10,7 @@ Docker Image is built by Concourse CI.
 
 Triggers:
 - DockerHub: [alpine](https://hub.docker.com/_/alpine) new latest image (linux/amd64)
-- GitHub: [aws/awscli](https://github.com/aws/aws-cli) new release (exclude dev)
+- PyPI: [awscli](https://pypi.org/project/awscli/) new release
 
 (TODO) Summarized Continuous Build by [Docker Build Pipeline](https://github.com/daichi703n/docker-build-pipeline).
 
