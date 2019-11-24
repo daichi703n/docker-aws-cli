@@ -4,7 +4,7 @@ Docker Image for running AWS CLI.
 https://hub.docker.com/r/daichi703n/awscli
 
 ## CI
-![Architecture](docs/images/DockerBuildByConcourse-Architecture.png)
+![Architecture](https://github.com/daichi703n/docker-awscli/blob/master/docs/images/DockerBuildByConcourse-Architecture.png?raw=true)
 
 Docker Image is built by Concourse CI.  
 
