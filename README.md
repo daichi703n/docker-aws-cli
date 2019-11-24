@@ -4,6 +4,8 @@ Docker Image for running AWS CLI.
 https://hub.docker.com/r/daichi703n/awscli
 
 ## CI
+![Architecture](docs/images/DockerBuildByConcourse-Architecture.png)
+
 Docker Image is built by Concourse CI.  
 
 Triggers:
@@ -11,8 +13,6 @@ Triggers:
 - GitHub: [aws/awscli](https://github.com/aws/aws-cli) new release (exclude dev)
 
 (TODO) Summarized Continuous Build by [Docker Build Pipeline](https://github.com/daichi703n/docker-build-pipeline).
-
-#TODO: (figure)
 
 ## versioning (WIP)
 
