@@ -81,6 +81,7 @@ jobs:
           tag: dind
       inputs:
       - name: repo
+      - name: pypi-awscli-resource
       outputs: 
       - name: repo
       - name: docker-images
@@ -89,6 +90,7 @@ jobs:
         args: 
         - -c
         - | 
+          export AWSCLI_VERSION=$(cat pypi-awscli-resource/version)
           cd repo/ci/tasks
           source ./docker-lib.sh
           start_docker
@@ -263,6 +265,7 @@ jobs:
           git tag -a ${AWSCLI_PATCH_VERSION}-alpine${ALPINE_PATCH_VERSION} -m ""
           # if [ #Diff ver ]; then #TODO: check latest release
           #switch to develop on developping
+          # git checkout develop
           git checkout master
           git merge version/${AWSCLI_PATCH_VERSION}-alpine${ALPINE_PATCH_VERSION}
           # fi
